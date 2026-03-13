@@ -79,9 +79,7 @@ struct MenuBarView: View {
             .rotationEffect(.degrees(isRefreshing ? 360 : 0))
 
             HeaderIconButton(icon: "gearshape", tooltip: "Settings") {
-                if let appDelegate = NSApp.delegate as? AppDelegate {
-                    appDelegate.openSettingsWindow()
-                }
+                NotificationCenter.default.post(name: .openSettings, object: nil)
             }
         }
         .padding(.horizontal, 14)

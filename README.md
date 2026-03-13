@@ -16,6 +16,7 @@ A lightweight, native macOS menu bar app for managing your Homebrew and Launchd 
 - **Service actions** — Start, stop, restart with hover-activated buttons
 - **Dark / Light / System** theme support
 - **Launch at login** — Start DodoService automatically when you log in
+- **Settings window** — Configure appearance, refresh interval, and service visibility
 
 ## Requirements
 
@@ -25,17 +26,16 @@ A lightweight, native macOS menu bar app for managing your Homebrew and Launchd 
 
 ## Installation
 
-### From release
+### From DMG (recommended)
 
-Download the latest `DodoService.app` from [Releases](https://github.com/DodoApps/dodoservice/releases), move it to `/Applications`, and open it.
+Download the latest `DodoService.dmg` from [Releases](https://github.com/DodoApps/dodoservice/releases), open it, and drag DodoService to your Applications folder.
 
 ### Build from source
 
 ```bash
 git clone https://github.com/DodoApps/dodoservice.git
 cd dodoservice
-xcodebuild -project DodoService.xcodeproj -scheme DodoService -configuration Release archive -archivePath build/DodoService.xcarchive
-xcodebuild -exportArchive -archivePath build/DodoService.xcarchive -exportPath release/ -exportOptionsPlist exportOptions.plist
+xcodebuild -project DodoService.xcodeproj -scheme DodoService -configuration Release build CONFIGURATION_BUILD_DIR=release
 cp -R release/DodoService.app /Applications/
 ```
 
@@ -50,6 +50,7 @@ DodoService lives in your menu bar. Click the server icon to open the popover:
 - **Hover a service** — Action buttons appear (start/stop/restart)
 - **Right-click a service** — Pin, copy name, or perform actions
 - **Click a category header** — Collapse/expand that section
+- **Settings icon** — Opens the settings window for configuration
 
 ## Architecture
 

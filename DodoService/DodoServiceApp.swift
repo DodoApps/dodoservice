@@ -12,11 +12,17 @@ struct DodoServiceApp: App {
     }
 }
 
+extension Notification.Name {
+    static let openSettings = Notification.Name("openSettings")
+}
+
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var settingsWindow: NSWindow?
+    private var settingsCloseObserver: Any?
+    private var settingsNotificationObserver: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set activation policy based on user preference
@@ -34,6 +40,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Sync launch at login state
         LaunchAtLoginManager.shared.syncWithSystemState()
+
+        // Listen for settings open requests from SwiftUI views
+        settingsNotificationObserver = NotificationCenter.default.addObserver(
+            forName: .openSettings,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.openSettingsWindow()
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -151,8 +166,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindow = window
         }
 
+        // For menu bar apps (LSUIElement), temporarily become a regular app
+        // so the settings window can receive focus properly
+        NSApp.setActivationPolicy(.regular)
         settingsWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+
+        // Observe window close to revert activation policy (only once)
+        if settingsCloseObserver == nil {
+            settingsCloseObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: settingsWindow,
+                queue: .main
+            ) { [weak self] _ in
+                let showInDock = SettingsManager.shared.settings.showInDock
+                NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
+                if let observer = self?.settingsCloseObserver {
+                    NotificationCenter.default.removeObserver(observer)
+                    self?.settingsCloseObserver = nil
+                }
+            }
+        }
     }
 
     @objc private func quitApp() {
