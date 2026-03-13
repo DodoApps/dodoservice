@@ -116,7 +116,7 @@ struct ServicesSettingsTab: View {
                                 .font(.system(size: 12))
                             Spacer()
                             Button(action: {
-                                settings.settings.pinnedServiceIds.removeAll { $0 == id }
+                                settings.settings.pinnedServiceIds.removeAll(where: { $0 == id })
                             }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .foregroundColor(.secondary)

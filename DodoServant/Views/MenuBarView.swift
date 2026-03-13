@@ -21,7 +21,7 @@ struct MenuBarView: View {
                 VStack(spacing: 0) {
                     if coordinator.isLoading && coordinator.allServices.isEmpty {
                         loadingView
-                    } else if filteredServices.isEmpty && !searchText.isEmpty {
+                    } else if pinnedFiltered.isEmpty && unpinnedFiltered.isEmpty && !searchText.isEmpty {
                         emptySearchView
                     } else {
                         // Pinned services
@@ -70,7 +70,6 @@ struct MenuBarView: View {
         .frame(width: 320)
         .task {
             await coordinator.refreshAll()
-            coordinator.startAutoRefresh()
         }
     }
 
@@ -87,7 +86,7 @@ struct MenuBarView: View {
             Spacer()
 
             // Running count badge
-            Text("\(coordinator.runningServices.count) running")
+            Text("\(coordinator.runningCount) running")
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 6)
@@ -173,25 +172,30 @@ struct MenuBarView: View {
         .padding(.vertical, 8)
     }
 
-    // MARK: - Filtering
+    // MARK: - Filtering (single pass)
 
-    private var filteredServices: [ServiceItem] {
-        if searchText.isEmpty {
-            return coordinator.allServices
+    private var partitionedServices: (pinned: [ServiceItem], unpinned: [ServiceItem]) {
+        var pinned: [ServiceItem] = []
+        var unpinned: [ServiceItem] = []
+
+        for service in coordinator.allServices {
+            if !searchText.isEmpty {
+                guard service.name.localizedCaseInsensitiveContains(searchText) ||
+                      service.label.localizedCaseInsensitiveContains(searchText) else {
+                    continue
+                }
+            }
+            if settings.isPinned(service) {
+                pinned.append(service)
+            } else {
+                unpinned.append(service)
+            }
         }
-        return coordinator.allServices.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.label.localizedCaseInsensitiveContains(searchText)
-        }
+        return (pinned, unpinned)
     }
 
-    private var pinnedFiltered: [ServiceItem] {
-        filteredServices.filter { settings.isPinned($0) }
-    }
-
-    private var unpinnedFiltered: [ServiceItem] {
-        filteredServices.filter { !settings.isPinned($0) }
-    }
+    private var pinnedFiltered: [ServiceItem] { partitionedServices.pinned }
+    private var unpinnedFiltered: [ServiceItem] { partitionedServices.unpinned }
 }
 
 // MARK: - Service Row View
@@ -226,7 +230,7 @@ struct ServiceRowView: View {
                 }
 
                 HStack(spacing: 4) {
-                    Text(service.type.rawValue)
+                    Text(service.type.displayName)
                         .font(.system(size: 9))
                         .foregroundColor(.secondary)
 

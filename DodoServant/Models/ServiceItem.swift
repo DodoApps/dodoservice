@@ -3,8 +3,15 @@ import Foundation
 // MARK: - Service Type
 
 enum ServiceType: String, Codable, CaseIterable {
-    case brew = "Homebrew"
-    case launchd = "Launchd"
+    case brew
+    case launchd
+
+    var displayName: String {
+        switch self {
+        case .brew: return "Homebrew"
+        case .launchd: return "Launchd"
+        }
+    }
 
     var icon: String {
         switch self {
@@ -21,15 +28,6 @@ enum ServiceStatus: String, Codable {
     case stopped = "Stopped"
     case error = "Error"
     case unknown = "Unknown"
-
-    var color: String {
-        switch self {
-        case .running: return "green"
-        case .stopped: return "secondary"
-        case .error: return "red"
-        case .unknown: return "orange"
-        }
-    }
 
     var icon: String {
         switch self {

@@ -36,16 +36,16 @@ class BrewServiceManager: ObservableObject {
     // MARK: - List Services
 
     func refreshServices() async {
-        guard let brewPath = brewPath else {
-            lastError = "Homebrew not found"
-            return
-        }
+        guard let brewPath = brewPath else { return }
 
         isLoading = true
         lastError = nil
 
+        var env = ProcessInfo.processInfo.environment
+        env["PATH"] = "/opt/homebrew/bin:/usr/local/bin:" + (env["PATH"] ?? "")
+
         do {
-            let output = try await runCommand(brewPath, arguments: ["services", "list"])
+            let output = try await ShellRunner.run(brewPath, arguments: ["services", "list"], env: env)
             services = parseBrewServicesOutput(output)
         } catch {
             lastError = "Failed to list brew services: \(error.localizedDescription)"
@@ -71,8 +71,11 @@ class BrewServiceManager: ObservableObject {
     private func runServiceAction(_ action: String, service: ServiceItem) async -> Bool {
         guard let brewPath = brewPath else { return false }
 
+        var env = ProcessInfo.processInfo.environment
+        env["PATH"] = "/opt/homebrew/bin:/usr/local/bin:" + (env["PATH"] ?? "")
+
         do {
-            _ = try await runCommand(brewPath, arguments: ["services", action, service.name])
+            _ = try await ShellRunner.run(brewPath, arguments: ["services", action, service.name], env: env)
             await refreshServices()
             return true
         } catch {
@@ -116,46 +119,5 @@ class BrewServiceManager: ObservableObject {
         }
 
         return items
-    }
-
-    // MARK: - Shell Command
-
-    private func runCommand(_ path: String, arguments: [String]) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let process = Process()
-                let pipe = Pipe()
-
-                process.executableURL = URL(fileURLWithPath: path)
-                process.arguments = arguments
-                process.standardOutput = pipe
-                process.standardError = pipe
-
-                // Inherit user's PATH for brew to work properly
-                var env = ProcessInfo.processInfo.environment
-                env["PATH"] = "/opt/homebrew/bin:/usr/local/bin:" + (env["PATH"] ?? "")
-                process.environment = env
-
-                do {
-                    try process.run()
-                    process.waitUntilExit()
-
-                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                    let output = String(data: data, encoding: .utf8) ?? ""
-
-                    if process.terminationStatus == 0 {
-                        continuation.resume(returning: output)
-                    } else {
-                        continuation.resume(throwing: NSError(
-                            domain: "BrewServiceManager",
-                            code: Int(process.terminationStatus),
-                            userInfo: [NSLocalizedDescriptionKey: output]
-                        ))
-                    }
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
     }
 }

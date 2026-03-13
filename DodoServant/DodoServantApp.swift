@@ -7,11 +7,12 @@ struct DodoServantApp: App {
 
     var body: some Scene {
         Settings {
-            SettingsView()
+            EmptyView()
         }
     }
 }
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
@@ -24,6 +25,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Setup menu bar
         setupMenuBar()
+
+        // Start auto-refresh timer
+        Task {
+            await ServiceCoordinator.shared.refreshAll()
+            ServiceCoordinator.shared.startAutoRefresh()
+        }
 
         // Sync launch at login state
         LaunchAtLoginManager.shared.syncWithSystemState()

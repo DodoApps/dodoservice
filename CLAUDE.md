@@ -33,6 +33,7 @@ Native macOS menu bar app built with SwiftUI + AppKit. Runs as a menu bar item (
 - **LaunchdServiceManager** — Manages launchd services via `launchctl` CLI. Supports both user-level and system-level services.
 - **SettingsManager** — Persists `AppSettings` to UserDefaults as JSON. Settings auto-save on `didSet` and auto-apply appearance mode.
 - **LaunchAtLoginManager** — Handles launch at login via SMAppService (macOS 13+).
+- **ShellRunner** — Shared utility for running shell commands via Process. Used by both BrewServiceManager and LaunchdServiceManager.
 
 ### Key design decisions
 
@@ -56,7 +57,8 @@ DodoServant/
 │   ├── LaunchdServiceManager.swift # Launchd service management
 │   ├── LaunchAtLoginManager.swift  # Login item management
 │   ├── ServiceCoordinator.swift  # Unified service coordinator
-│   └── SettingsManager.swift     # Settings persistence
+│   ├── SettingsManager.swift     # Settings persistence
+│   └── ShellRunner.swift         # Shared shell command execution
 └── Views/
     ├── MenuBarView.swift         # Main popover view + ServiceRowView
     └── Settings/

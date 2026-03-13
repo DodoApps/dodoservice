@@ -2,15 +2,21 @@ import Foundation
 import Combine
 import AppKit
 
+@MainActor
 class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
 
     @Published var settings: AppSettings {
         didSet {
             save()
-            applyAppearance()
+            if oldValue.appearanceMode != settings.appearanceMode {
+                applyAppearance()
+            }
         }
     }
+
+    /// Cached set for O(1) pin lookups
+    private var pinnedSet: Set<String> = []
 
     private let userDefaults = UserDefaults.standard
     private let settingsKey = "DodoServantSettings"
@@ -22,10 +28,12 @@ class SettingsManager: ObservableObject {
         } else {
             self.settings = .default
         }
+        pinnedSet = Set(settings.pinnedServiceIds)
         applyAppearance()
     }
 
     func save() {
+        pinnedSet = Set(settings.pinnedServiceIds)
         if let encoded = try? JSONEncoder().encode(settings) {
             userDefaults.set(encoded, forKey: settingsKey)
         }
@@ -37,22 +45,20 @@ class SettingsManager: ObservableObject {
     }
 
     func applyAppearance() {
-        DispatchQueue.main.async {
-            switch self.settings.appearanceMode {
-            case .system:
-                NSApp.appearance = nil
-            case .light:
-                NSApp.appearance = NSAppearance(named: .aqua)
-            case .dark:
-                NSApp.appearance = NSAppearance(named: .darkAqua)
-            }
+        switch settings.appearanceMode {
+        case .system:
+            NSApp.appearance = nil
+        case .light:
+            NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark:
+            NSApp.appearance = NSAppearance(named: .darkAqua)
         }
     }
 
     // MARK: - Pin Management
 
     func isPinned(_ service: ServiceItem) -> Bool {
-        settings.pinnedServiceIds.contains(service.id)
+        pinnedSet.contains(service.id)
     }
 
     func togglePin(_ service: ServiceItem) {

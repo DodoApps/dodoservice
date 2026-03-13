@@ -17,6 +17,7 @@
 		A10008 /* ServiceCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008; };
 		A10009 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
 		A10010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
+		A10011 /* ShellRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10014; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 		B10011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B10012 /* DodoServant.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DodoServant.entitlements; sourceTree = "<group>"; };
 		B10013 /* DodoServant.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DodoServant.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10014 /* ShellRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellRunner.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +86,7 @@
 				B10006 /* BrewServiceManager.swift */,
 				B10007 /* LaunchdServiceManager.swift */,
 				B10008 /* ServiceCoordinator.swift */,
+				B10014 /* ShellRunner.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -191,6 +194,7 @@
 				A10008 /* ServiceCoordinator.swift in Sources */,
 				A10009 /* MenuBarView.swift in Sources */,
 				A10010 /* SettingsView.swift in Sources */,
+				A10011 /* ShellRunner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

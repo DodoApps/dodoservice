@@ -17,19 +17,8 @@ class LaunchdServiceManager: ObservableObject {
         lastError = nil
 
         do {
-            var allServices: [ServiceItem] = []
-
-            // User-level agents
-            let userServices = try await listLaunchdServices(domain: "user", isUser: true)
-            allServices.append(contentsOf: userServices)
-
-            // System-level daemons (optional)
-            if includeSystem {
-                let systemServices = try await listLaunchdServices(domain: "system", isUser: false)
-                allServices.append(contentsOf: systemServices)
-            }
-
-            services = allServices
+            let output = try await ShellRunner.runIgnoringExitCode("/bin/launchctl", arguments: ["list"])
+            services = parseLaunchctlOutput(output, filterApple: !includeSystem)
         } catch {
             lastError = "Failed to list launchd services: \(error.localizedDescription)"
         }
@@ -40,46 +29,30 @@ class LaunchdServiceManager: ObservableObject {
     // MARK: - Service Actions
 
     func startService(_ service: ServiceItem) async -> Bool {
-        if service.user {
-            return await runLaunchctl(["kickstart", "-k", "gui/\(getuid())/\(service.label)"])
-        } else {
-            return await runLaunchctl(["kickstart", "-k", "system/\(service.label)"])
-        }
+        await runLaunchctl(["kickstart", "-k", domainTarget(for: service)])
     }
 
     func stopService(_ service: ServiceItem) async -> Bool {
-        if service.user {
-            return await runLaunchctl(["kill", "SIGTERM", "gui/\(getuid())/\(service.label)"])
-        } else {
-            return await runLaunchctl(["kill", "SIGTERM", "system/\(service.label)"])
-        }
+        await runLaunchctl(["kill", "SIGTERM", domainTarget(for: service)])
     }
 
     func restartService(_ service: ServiceItem) async -> Bool {
-        let stopped = await stopService(service)
-        if stopped {
-            // Small delay to let the service stop
-            try? await Task.sleep(nanoseconds: 500_000_000)
-        }
+        _ = await stopService(service)
+        try? await Task.sleep(nanoseconds: 500_000_000)
         let started = await startService(service)
         await refreshServices(includeSystem: SettingsManager.shared.settings.showSystemLaunchdServices)
         return started
     }
 
-    // MARK: - Parse launchctl list
+    // MARK: - Domain Path
 
-    private func listLaunchdServices(domain: String, isUser: Bool) async throws -> [ServiceItem] {
-        let output: String
-        if isUser {
-            output = try await runCommand("/bin/launchctl", arguments: ["list"])
-        } else {
-            output = try await runCommand("/bin/launchctl", arguments: ["list"])
-        }
-
-        return parseLaunchctlOutput(output, isUser: isUser)
+    private func domainTarget(for service: ServiceItem) -> String {
+        service.user ? "gui/\(getuid())/\(service.label)" : "system/\(service.label)"
     }
 
-    private func parseLaunchctlOutput(_ output: String, isUser: Bool) -> [ServiceItem] {
+    // MARK: - Parse launchctl list
+
+    private func parseLaunchctlOutput(_ output: String, filterApple: Bool) -> [ServiceItem] {
         var items: [ServiceItem] = []
         let lines = output.components(separatedBy: "\n")
 
@@ -94,8 +67,7 @@ class LaunchdServiceManager: ObservableObject {
             let statusStr = columns[1].trimmingCharacters(in: .whitespaces)
             let label = columns[2].trimmingCharacters(in: .whitespaces)
 
-            // Skip Apple internal services for cleaner list
-            if label.hasPrefix("com.apple.") && !SettingsManager.shared.settings.showSystemLaunchdServices {
+            if filterApple && label.hasPrefix("com.apple.") {
                 continue
             }
 
@@ -108,14 +80,13 @@ class LaunchdServiceManager: ObservableObject {
                 status = .error
             }
 
-            let item = ServiceItem(
+            items.append(ServiceItem(
                 name: label,
                 type: .launchd,
                 status: status,
                 label: label,
-                user: isUser
-            )
-            items.append(item)
+                user: true
+            ))
         }
 
         return items.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
@@ -125,39 +96,11 @@ class LaunchdServiceManager: ObservableObject {
 
     private func runLaunchctl(_ arguments: [String]) async -> Bool {
         do {
-            _ = try await runCommand("/bin/launchctl", arguments: arguments)
+            _ = try await ShellRunner.runIgnoringExitCode("/bin/launchctl", arguments: arguments)
             return true
         } catch {
             lastError = "launchctl error: \(error.localizedDescription)"
             return false
-        }
-    }
-
-    private func runCommand(_ path: String, arguments: [String]) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let process = Process()
-                let pipe = Pipe()
-                let errorPipe = Pipe()
-
-                process.executableURL = URL(fileURLWithPath: path)
-                process.arguments = arguments
-                process.standardOutput = pipe
-                process.standardError = errorPipe
-
-                do {
-                    try process.run()
-                    process.waitUntilExit()
-
-                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                    let output = String(data: data, encoding: .utf8) ?? ""
-
-                    // launchctl sometimes returns non-zero for operations that succeed
-                    continuation.resume(returning: output)
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
         }
     }
 }

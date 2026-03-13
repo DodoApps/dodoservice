@@ -1,13 +1,13 @@
 import Foundation
 import Combine
 
-/// Coordinates both Brew and Launchd service managers into a unified service list
 @MainActor
 class ServiceCoordinator: ObservableObject {
     static let shared = ServiceCoordinator()
 
     @Published var allServices: [ServiceItem] = []
     @Published var isLoading = false
+    @Published var runningCount = 0
 
     private let brewManager = BrewServiceManager.shared
     private let launchdManager = LaunchdServiceManager.shared
@@ -17,7 +17,6 @@ class ServiceCoordinator: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     private init() {
-        // Observe changes from both managers
         brewManager.$services
             .combineLatest(launchdManager.$services)
             .receive(on: DispatchQueue.main)
@@ -35,6 +34,10 @@ class ServiceCoordinator: ObservableObject {
             .store(in: &cancellables)
     }
 
+    deinit {
+        refreshTimer?.invalidate()
+    }
+
     // MARK: - Refresh
 
     func refreshAll() async {
@@ -42,12 +45,14 @@ class ServiceCoordinator: ObservableObject {
         let showLaunchd = settings.settings.showLaunchdServices
         let includeSystem = settings.settings.showSystemLaunchdServices
 
-        if showBrew {
-            await brewManager.refreshServices()
-        }
-        if showLaunchd {
-            await launchdManager.refreshServices(includeSystem: includeSystem)
-        }
+        async let brewRefresh: () = {
+            if showBrew { await self.brewManager.refreshServices() }
+        }()
+        async let launchdRefresh: () = {
+            if showLaunchd { await self.launchdManager.refreshServices(includeSystem: includeSystem) }
+        }()
+
+        _ = await (brewRefresh, launchdRefresh)
     }
 
     func startAutoRefresh() {
@@ -94,20 +99,6 @@ class ServiceCoordinator: ObservableObject {
         }
     }
 
-    // MARK: - Filtered Lists
-
-    var pinnedServices: [ServiceItem] {
-        allServices.filter { settings.isPinned($0) }
-    }
-
-    var unpinnedServices: [ServiceItem] {
-        allServices.filter { !settings.isPinned($0) }
-    }
-
-    var runningServices: [ServiceItem] {
-        allServices.filter { $0.status == .running }
-    }
-
     // MARK: - Private
 
     private func mergeServices(brew: [ServiceItem], launchd: [ServiceItem]) {
@@ -118,6 +109,10 @@ class ServiceCoordinator: ObservableObject {
         if settings.settings.showLaunchdServices {
             merged.append(contentsOf: launchd)
         }
+
+        // Skip update if nothing changed
+        guard merged != allServices else { return }
         allServices = merged
+        runningCount = merged.filter { $0.status == .running }.count
     }
 }
