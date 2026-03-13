@@ -9,6 +9,7 @@ struct MenuBarView: View {
     @State private var hoveredServiceId: String?
     @State private var selectedTab: ViewTab = .all
     @State private var isRefreshing = false
+    @State private var collapsedSections: Set<String> = []
 
     enum ViewTab: String, CaseIterable {
         case all = "All"
@@ -165,6 +166,20 @@ struct MenuBarView: View {
 
     // MARK: - Service List
 
+    private func isSectionCollapsed(_ key: String) -> Bool {
+        collapsedSections.contains(key)
+    }
+
+    private func toggleSection(_ key: String) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if collapsedSections.contains(key) {
+                collapsedSections.remove(key)
+            } else {
+                collapsedSections.insert(key)
+            }
+        }
+    }
+
     private var serviceListSection: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
@@ -176,13 +191,22 @@ struct MenuBarView: View {
                     // Pinned section
                     let pinned = filteredAndGrouped.flatMap(\.services).filter { settings.isPinned($0) }
                     if !pinned.isEmpty {
-                        sectionDivider(label: "Pinned", icon: "pin.fill", color: .orange)
-                        ForEach(pinned) { service in
-                            ServiceRow(
-                                service: service,
-                                isHovered: hoveredServiceId == service.id
-                            )
-                            .onHover { h in hoveredServiceId = h ? service.id : nil }
+                        accordionHeader(
+                            label: "Pinned",
+                            icon: "pin.fill",
+                            color: .orange,
+                            count: pinned.count,
+                            key: "pinned"
+                        )
+                        if !isSectionCollapsed("pinned") {
+                            ForEach(pinned) { service in
+                                ServiceRow(
+                                    service: service,
+                                    isHovered: hoveredServiceId == service.id
+                                )
+                                .onHover { h in hoveredServiceId = h ? service.id : nil }
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
                         }
                     }
 
@@ -190,17 +214,23 @@ struct MenuBarView: View {
                     ForEach(filteredAndGrouped, id: \.category) { group in
                         let unpinned = group.services.filter { !settings.isPinned($0) }
                         if !unpinned.isEmpty {
-                            sectionDivider(
+                            let key = group.category.rawValue
+                            accordionHeader(
                                 label: group.category.rawValue,
                                 icon: group.category.icon,
-                                color: group.category.color
+                                color: group.category.color,
+                                count: unpinned.count,
+                                key: key
                             )
-                            ForEach(unpinned) { service in
-                                ServiceRow(
-                                    service: service,
-                                    isHovered: hoveredServiceId == service.id
-                                )
-                                .onHover { h in hoveredServiceId = h ? service.id : nil }
+                            if !isSectionCollapsed(key) {
+                                ForEach(unpinned) { service in
+                                    ServiceRow(
+                                        service: service,
+                                        isHovered: hoveredServiceId == service.id
+                                    )
+                                    .onHover { h in hoveredServiceId = h ? service.id : nil }
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                                }
                             }
                         }
                     }
@@ -261,21 +291,35 @@ struct MenuBarView: View {
         .padding(.vertical, 30)
     }
 
-    private func sectionDivider(label: String, icon: String, color: Color) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: icon)
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundColor(color.opacity(0.8))
+    private func accordionHeader(label: String, icon: String, color: Color, count: Int, key: String) -> some View {
+        let collapsed = isSectionCollapsed(key)
 
-            Text(label.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.secondary.opacity(0.7))
-                .tracking(0.5)
+        return Button(action: { toggleSection(key) }) {
+            HStack(spacing: 5) {
+                Image(systemName: collapsed ? "chevron.right" : "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.secondary.opacity(0.5))
+                    .frame(width: 10)
 
-            Rectangle()
-                .fill(Color.primary.opacity(0.06))
-                .frame(height: 1)
+                Image(systemName: icon)
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(color.opacity(0.8))
+
+                Text(label.uppercased())
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.7))
+                    .tracking(0.5)
+
+                Text("\(count)")
+                    .font(.system(size: 9, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary.opacity(0.5))
+
+                Rectangle()
+                    .fill(Color.primary.opacity(0.06))
+                    .frame(height: 1)
+            }
         }
+        .buttonStyle(.plain)
         .padding(.horizontal, 14)
         .padding(.top, 10)
         .padding(.bottom, 4)
