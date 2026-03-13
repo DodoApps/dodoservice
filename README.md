@@ -1,4 +1,4 @@
-# DodoServant
+# DodoService
 
 A lightweight, native macOS menu bar app for managing your Homebrew and Launchd services.
 
@@ -15,7 +15,7 @@ A lightweight, native macOS menu bar app for managing your Homebrew and Launchd 
 - **Auto-refresh** — Configurable refresh interval (5s / 10s / 30s / 60s)
 - **Service actions** — Start, stop, restart with hover-activated buttons
 - **Dark / Light / System** theme support
-- **Launch at login** — Start DodoServant automatically when you log in
+- **Launch at login** — Start DodoService automatically when you log in
 
 ## Requirements
 
@@ -27,23 +27,23 @@ A lightweight, native macOS menu bar app for managing your Homebrew and Launchd 
 
 ### From release
 
-Download the latest `DodoServant.app` from [Releases](https://github.com/DodoApps/dodoservant/releases), move it to `/Applications`, and open it.
+Download the latest `DodoService.app` from [Releases](https://github.com/DodoApps/dodoservice/releases), move it to `/Applications`, and open it.
 
 ### Build from source
 
 ```bash
-git clone https://github.com/DodoApps/dodoservant.git
-cd dodoservant
-xcodebuild -project DodoServant.xcodeproj -scheme DodoServant -configuration Release archive -archivePath build/DodoServant.xcarchive
-xcodebuild -exportArchive -archivePath build/DodoServant.xcarchive -exportPath release/ -exportOptionsPlist exportOptions.plist
-cp -R release/DodoServant.app /Applications/
+git clone https://github.com/DodoApps/dodoservice.git
+cd dodoservice
+xcodebuild -project DodoService.xcodeproj -scheme DodoService -configuration Release archive -archivePath build/DodoService.xcarchive
+xcodebuild -exportArchive -archivePath build/DodoService.xcarchive -exportPath release/ -exportOptionsPlist exportOptions.plist
+cp -R release/DodoService.app /Applications/
 ```
 
-Or open `DodoServant.xcodeproj` in Xcode and press `Cmd+R`.
+Or open `DodoService.xcodeproj` in Xcode and press `Cmd+R`.
 
 ## Usage
 
-DodoServant lives in your menu bar. Click the server icon to open the popover:
+DodoService lives in your menu bar. Click the server icon to open the popover:
 
 - **Left-click** — Opens the service manager popover
 - **Right-click** — Context menu with appearance, settings, and quit options

@@ -143,7 +143,7 @@ struct AboutTab: View {
                 .font(.system(size: 40))
                 .foregroundColor(.accentColor)
 
-            Text("DodoServant")
+            Text("DodoService")
                 .font(.system(size: 18, weight: .bold))
 
             Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0")")

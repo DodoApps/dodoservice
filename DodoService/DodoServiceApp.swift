@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 @main
-struct DodoServantApp: App {
+struct DodoServiceApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
@@ -47,7 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem.button {
             let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-            if let image = NSImage(systemSymbolName: "server.rack", accessibilityDescription: "DodoServant")?.withSymbolConfiguration(config) {
+            if let image = NSImage(systemSymbolName: "server.rack", accessibilityDescription: "DodoService")?.withSymbolConfiguration(config) {
                 image.isTemplate = true
                 button.image = image
             }
@@ -107,7 +107,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
-        let quitItem = NSMenuItem(title: "Quit DodoServant", action: #selector(quitApp), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "Quit DodoService", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -144,7 +144,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "DodoServant Settings"
+            window.title = "DodoService Settings"
             window.center()
             window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: SettingsView())

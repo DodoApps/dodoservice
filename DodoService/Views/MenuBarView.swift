@@ -60,7 +60,7 @@ struct MenuBarView: View {
             }
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("DodoServant")
+                Text("DodoService")
                     .font(.system(size: 14, weight: .bold))
                 Text("Service manager")
                     .font(.system(size: 10))

@@ -19,7 +19,7 @@ class SettingsManager: ObservableObject {
     private var pinnedSet: Set<String> = []
 
     private let userDefaults = UserDefaults.standard
-    private let settingsKey = "DodoServantSettings"
+    private let settingsKey = "DodoServiceSettings"
 
     private init() {
         if let data = userDefaults.data(forKey: settingsKey),

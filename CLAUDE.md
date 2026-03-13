@@ -6,25 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Open in Xcode and build with Cmd+R:
 ```bash
-open DodoServant.xcodeproj
+open DodoService.xcodeproj
 ```
 
 Command-line build:
 ```bash
-xcodebuild -project DodoServant.xcodeproj -scheme DodoServant -configuration Debug build
+xcodebuild -project DodoService.xcodeproj -scheme DodoService -configuration Debug build
 ```
 
 Archive for release:
 ```bash
-xcodebuild -project DodoServant.xcodeproj -scheme DodoServant -configuration Release archive -archivePath build/DodoServant.xcarchive
-xcodebuild -exportArchive -archivePath build/DodoServant.xcarchive -exportPath release/ -exportOptionsPlist exportOptions.plist
+xcodebuild -project DodoService.xcodeproj -scheme DodoService -configuration Release archive -archivePath build/DodoService.xcarchive
+xcodebuild -exportArchive -archivePath build/DodoService.xcarchive -exportPath release/ -exportOptionsPlist exportOptions.plist
 ```
 
 There are no unit tests in this project. Requires Xcode 15+, macOS 14.0+ (Sonoma), Swift 5.9.
 
 ## Architecture
 
-Native macOS menu bar app built with SwiftUI + AppKit. Runs as a menu bar item (NSStatusItem) with left-click popover and right-click context menu. Uses `NSApplicationDelegateAdaptor` in `DodoServantApp.swift` to bridge SwiftUI app lifecycle with AppKit window management.
+Native macOS menu bar app built with SwiftUI + AppKit. Runs as a menu bar item (NSStatusItem) with left-click popover and right-click context menu. Uses `NSApplicationDelegateAdaptor` in `DodoServiceApp.swift` to bridge SwiftUI app lifecycle with AppKit window management.
 
 ### Singleton services (all use `static let shared`)
 
@@ -45,10 +45,10 @@ Native macOS menu bar app built with SwiftUI + AppKit. Runs as a menu bar item (
 ### File structure
 
 ```
-DodoServant/
-├── DodoServantApp.swift          # App entry point + AppDelegate
+DodoService/
+├── DodoServiceApp.swift          # App entry point + AppDelegate
 ├── Info.plist
-├── DodoServant.entitlements
+├── DodoService.entitlements
 ├── Models/
 │   ├── AppSettings.swift         # Settings model + AppearanceMode enum
 │   └── ServiceItem.swift         # ServiceItem, ServiceType, ServiceStatus
@@ -70,4 +70,4 @@ DodoServant/
 - Swift API Design Guidelines, SwiftUI for all views
 - `@MainActor` on observable service classes
 - MARK comments for section organization
-- Bundle ID: `com.dodoservant.app`
+- Bundle ID: `com.dodoservice.app`
